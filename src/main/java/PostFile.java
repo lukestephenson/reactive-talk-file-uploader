@@ -7,6 +7,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -16,11 +17,13 @@ import java.util.concurrent.TimeUnit;
 
 
 public class PostFile {
+    private static final int INPUT_STREAM_DELAY = Integer.valueOf(System.getProperty("delay", "5000"));
+    private static final int SERVER_PORT = Integer.valueOf(System.getProperty("port", "9000"));
+
     public static void main(String[] args) throws Exception {
-//        if (args.length != 1)  {
-//            System.out.println("File path not given");
-//            System.exit(1);
-//        }
+
+        URL uploadResource = PostFile.class.getResource("iTerm2_v2_0.zip");
+
         ExecutorService executor = Executors.newFixedThreadPool(100);
 
         List<Callable<Void>> jobs = new ArrayList<>();
@@ -29,7 +32,7 @@ public class PostFile {
                 @Override
                 public Void call() throws Exception {
                     try {
-                        uploadFile();
+                        uploadFile(uploadResource);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -47,14 +50,12 @@ public class PostFile {
         System.out.println("Took " + (endTime - startTime) + " ms to complete");
     }
 
-    public static void uploadFile() throws IOException {
+    public static void uploadFile(URL uploadResource) throws IOException {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         try {
-            HttpPost httppost = new HttpPost("http://localhost:9000/save-size");
+            HttpPost httppost = new HttpPost("http://localhost:" + SERVER_PORT + "/size");
 
-            File file = new File("C:\\Users\\Luke\\Music\\Vietnamese\\Vietnamese 1B CD2\\01 Track 1.wma");
-
-            InputStream inputStream = new SlowInputStream(new BufferedInputStream(new FileInputStream(file)));
+            InputStream inputStream = new SlowInputStream(INPUT_STREAM_DELAY, new BufferedInputStream(uploadResource.openStream()));
 
             InputStreamEntity reqEntity = new InputStreamEntity(inputStream, -1, ContentType.APPLICATION_OCTET_STREAM);
             reqEntity.setChunked(true);
@@ -69,8 +70,6 @@ public class PostFile {
             System.out.println("Executing request: " + httppost.getRequestLine());
             CloseableHttpResponse response = httpclient.execute(httppost);
             try {
-//                System.out.println("----------------------------------------");
-//                System.out.println(response.getStatusLine());
                 System.out.println(toString(response.getEntity().getContent()));
                 EntityUtils.consume(response.getEntity());
             } finally {
@@ -88,7 +87,6 @@ public class PostFile {
         String read = br.readLine();
 
         while (read != null) {
-            //System.out.println(read);
             sb.append(read);
             read = br.readLine();
 
