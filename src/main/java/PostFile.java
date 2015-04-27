@@ -27,7 +27,7 @@ public class PostFile {
         ExecutorService executor = Executors.newFixedThreadPool(100);
 
         List<Callable<Void>> jobs = new ArrayList<>();
-        for (int i = 0; i < 150; i++) {
+        for (int i = 0; i < 50; i++) {
             jobs.add(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
